@@ -1,0 +1,36 @@
+main.content {
+    max-width: 950px;
+    margin-left: auto;
+    margin-right: auto;
+    text-align: center;
+}
+
+body {
+    background: linear-gradient(to bottom right, #e6f7ff, #ffffff);
+    font-family: 'Poppins', 'Helvetica', 'Arial', sans-serif;
+    font-size: 18px;
+    color: #333333;
+    animation: fadeInAnimation ease 1.5s;
+    animation-iteration-count: 1;
+    animation-fill-mode: forwards;
+}
+
+h1, h2, h3 {
+    font-family: 'Poppins', 'Helvetica', 'Arial', sans-serif;
+    text-align: center;
+}
+
+.content-box {
+    background-color: #ffffff;
+    padding: 50px;
+    margin: 40px auto;
+    border-radius: 16px;
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+    max-width: 1000px;
+    text-align: center;
+}
+
+@keyframes fadeInAnimation {
+  0% { opacity: 0; transform: translateY(20px); }
+  100% { opacity: 1; transform: translateY(0); }
+}

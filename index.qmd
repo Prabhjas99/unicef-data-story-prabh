@@ -1,0 +1,248 @@
+---
+title: "A Visual Analysis - Global Inequalities in Adolescent Mortality"
+author: "Prabhjas Singh (16815)"
+format:
+  html:
+    theme: cosmo
+    toc: true
+    toc-title: "On This Page"
+    toc-location: left
+    toc-depth: 3
+    toc-float: true
+    smooth-scroll: true
+    page-layout: full
+    backgroundcolor: "#f8f9fa"
+    embed-resources: true
+    code-fold: true
+    code-summary: "Show code"
+    code-tools: true
+    css: center.css
+execute:
+  warning: false
+  message: false
+---
+<div style="text-align: center; margin-top: 30px; margin-bottom: 30px;">
+  <h1 style="font-size: 40px; color: #0077b6; font-family: 'Georgia', serif; font-weight: bold;">
+    Global Inequalities in Adolescent Mortality
+  </h1>
+  <h3 style="font-size: 22px; color: #555; font-family: 'Georgia', serif; font-weight: normal;">
+    Prabhjas Singh - MSc in Management (Strategy) - Dublin City University
+  </h3>
+</div>
+
+<div class="content-box">
+
+# 📝 Executive Summary & Project Details
+
+**A Comprehensive Visualization and Analysis Project**  
+<br>
+
+**Name:** Prabhjas Singh (16815)  
+**University:** Dublin City University  
+**Program:** MSc in Management (Strategy)  
+**Module:** BAA1030 – Data Analytics and Storytelling  
+**Submission Date:** 27 April 2025  
+
+<br>
+
+Adolescents represent a pivotal stage of human development. Despite health advances, adolescent mortality remains a global concern.  
+<br>
+This report explores adolescent mortality patterns (ages 10–14 years), evaluating gender disparities, regional inequalities, temporal trends, and links with economic development. Visualizations and insights aim to highlight global health gaps and support targeted intervention strategies.
+
+</div>
+
+---
+
+```{python}
+# Dataset loading
+import pandas as pd
+from plotnine import *
+import plotly.express as px
+
+indicator = pd.read_csv('unicef_indicator_1_cleaned.csv')
+metadata = pd.read_csv('unicef_metadata_cleaned.csv')
+
+indicator.columns = indicator.columns.str.strip().str.lower()
+metadata.columns = metadata.columns.str.strip().str.lower()
+
+data = pd.merge(indicator, metadata, on='country', how='left')
+latest_year = data['time_period'].max()
+```
+
+---
+
+<div class="content-box">
+
+# 🌏 Global Mortality Mapping: Regional Inequalities
+
+**Study Focus:**  
+Visualize global mortality rates geographically. How does the world leaders look? Darker shows higher mortality rates!
+
+**Evaluation Goal:**  
+Spot regional mortality hotspots where adolescents face extreme risks.
+
+```{python}
+data['country'] = data['country'].str.title()
+latest_global_data = data[data['time_period'] == latest_year]
+
+fig = px.choropleth(
+    latest_global_data,
+    locations="country",
+    locationmode="country names",
+    color="obs_value",
+    color_continuous_scale=[
+        (0.0, "rgb(255,245,245)"),
+        (0.3, "rgb(255,200,200)"),
+        (0.6, "rgb(255,100,100)"),
+        (1.0, "rgb(178,34,34)")
+    ],
+    title="Global Distribution of Adolescent Mortality Rates",
+    labels={'obs_value': 'Mortality Rate (per 1,000)'}
+)
+
+fig.show()
+```
+
+> **Insight:**  
+> Sub-Saharan Africa and South Asia remain mortality epicenters.
+
+</div>
+
+---
+
+<div class="content-box">
+
+# 🌍 Global Gender Differences in Adolescent Mortality (Top 10 Countries)
+
+**Study Focus:**  
+Analyzing gender gaps globally by highlighting the top 10 countries.
+
+**Evaluation Goal:**  
+Identify where males face greater mortality challenges.
+
+```{python}
+latest_data = data[data['time_period'] == latest_year]
+latest_data = latest_data[latest_data['sex'].isin(['Male', 'Female'])]
+top10_countries = latest_data.groupby('country')['obs_value'].mean().sort_values(ascending=False).head(10).index.tolist()
+top10_gender_data = latest_data[latest_data['country'].isin(top10_countries)]
+
+(
+    ggplot(top10_gender_data) +
+    aes(x='country', y='obs_value', fill='sex') +
+    geom_bar(stat='identity', position='dodge') +
+    scale_fill_manual(values={"Male": "#17a2b8", "Female": "#e377c2"}) +
+    theme_minimal() +
+    labs(
+        title='Top 10 Countries: Adolescent Mortality by Gender',
+        x='Country',
+        y='Mortality Rate (per 1,000)',
+        fill='Gender'
+    )
+)
+```
+
+> **Insight:**  
+> Males face higher mortality risks globally, dominated by Sub-Saharan Africa.
+
+</div>
+
+---
+
+<div class="content-box">
+
+# 🇳🇬 Nigeria Adolescent Mortality Trends: A National Case Study
+
+**Why Nigeria?**  
+Nigeria has historically struggled with high adolescent mortality.
+
+```{python}
+nigeria = data[(data['country'] == 'Nigeria') & (data['time_period'] <= latest_year)]
+
+(
+    ggplot(nigeria) +
+    aes(x='time_period', y='obs_value') +
+    geom_line(color="#17a2b8", size=1.8) +
+    geom_point(color='black', size=3) +
+    theme_minimal() +
+    labs(
+        title='Nigeria Adolescent Mortality Rate Over Time',
+        x='Year',
+        y='Mortality Rate (per 1,000)'
+    )
+)
+```
+
+> **Insight:**  
+> Nigeria shows slow but steady improvement, but progress remains below global averages.
+
+</div>
+
+---
+
+<div class="content-box">
+
+# 💵 Economic Influence on Adolescent Survival
+
+**Study Focus:**  
+Analyze the link between GDP and adolescent mortality.
+
+```{python}
+bins = [0, 1000, 5000, 10000, 50000, 1000000]
+labels = ['<1k', '1k-5k', '5k-10k', '10k-50k', '>50k']
+data['gdp_band'] = pd.cut(data['gdp per capita (constant 2015 us$)'], bins=bins, labels=labels)
+
+latest_gender_data = data[(data['time_period'] == latest_year) & (data['sex'].isin(['Male', 'Female']))]
+avg_band_mortality = latest_gender_data.groupby(['gdp_band', 'sex'])['obs_value'].mean().reset_index()
+
+(
+    ggplot(avg_band_mortality) +
+    aes(x='gdp_band', y='obs_value', group='sex', color='sex') +
+    geom_line(size=2) +
+    geom_point(size=3) +
+    scale_color_manual(values={"Male": "#17a2b8", "Female": "#e377c2"}) +
+    theme_minimal() +
+    labs(
+        title='Average Mortality Rate by GDP Band (Gender Split)',
+        x='GDP Band',
+        y='Average Mortality Rate (per 1,000)',
+        color='Gender'
+    )
+)
+```
+
+> **Insight:**  
+> Mortality drops sharply after $10,000 GDP per capita.
+
+</div>
+
+---
+
+<div class="content-box">
+
+# 🧹 Conclusion: Addressing Global Adolescent Health Disparities
+
+✅ **Key Findings:**
+- Males are at higher mortality risk.
+<br>
+- Regional and economic disparities persist.
+<br>
+- Economic growth helps improve adolescent survival.
+
+✅ **Recommendations:**
+- Strengthen health infrastructure.
+<br>
+- Promote gender-sensitive health policies.
+<br>
+- Leverage economic development for youth health equity.
+
+</div>
+
+---
+
+<div class="content-box">
+
+# 📙 References
+
+- UNICEF Official Website: [https://www.unicef.org](https://www.unicef.org)
+
+</div>
